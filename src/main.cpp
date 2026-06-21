@@ -7,6 +7,12 @@
 #include "../include/containers/VVector.hpp"
 
 #include "../include/memory/VSharedPointer.hpp"
+#include "../include/memory/VUniquePointer.hpp"
+
+struct Trace {
+    Trace() { std::cout << "constructed\n"; }
+    ~Trace() { std::cout << "destroyed\n"; }
+};
 
 int main()
 {
@@ -168,5 +174,29 @@ int main()
 
     std::cout << "All Matrix tests passed.\n";
 
+    auto p = Vlib::make_vunique<int>(10);
+    std::cout<<*p<<"\n";
+    auto q = std::move(p);
+    std::cout<<*q<<"\n";
+    std::cout<<std::boolalpha<<(p == nullptr)<<"\n";
+    q.reset(new int(20));
+    std::cout<<*q<<"\n";
+    auto raw = q.release();
+    std::cout<<*raw<<"\n";
+    delete raw;
+
+    {
+        auto p = Vlib::make_vunique<Trace>();
+    }
+
+    Vlib::VUniquePointer<int[]> arr(new int[5]);
+    
+    for (int i = 0; i < 5; ++i)
+        arr[i] = i * 10;
+    
+    auto arr2 = std::move(arr);
+    
+    std::cout << std::boolalpha << (arr == nullptr) << "\n";
+    std::cout << arr2[3] << "\n";
     return 0;
 }
