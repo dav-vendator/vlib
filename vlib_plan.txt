@@ -1,0 +1,26 @@
+VLib
+│
+├── Memory
+│   ├── VPointer
+│   ├── UniquePointer
+│   └── Allocator
+│
+├── Containers
+│   ├── Vector
+│   ├── String
+│   ├── Array
+│   ├── List
+│   └── HashMap
+│
+├── Math
+│   ├── Matrix
+│   ├── Tensor
+│   └── Linear Algebra
+│
+├── ML
+│   ├── Tensor Operations
+│   ├── Autograd
+│   ├── Layers
+│   └── Optimizers
+│
+└── Utils
