@@ -4,8 +4,8 @@ Description: A dyamical tensor container
 Author: Dav Vendator
 */
 
-#ifndef VLIB_MATRIX_HPP
-#define VLIB_MATRIX_HPP
+#ifndef VLIB_TENSOR_HPP
+#define VLIB_TENSOR_HPP
 
 #include <cstddef>
 #include <stdexcept>
@@ -79,6 +79,7 @@ namespace Vlib{
         for (std::size_t i = 0; i < indices.size(); i++)
             offset += (this->strides_[i] * indices[[i]]);
         return offset;
+        
     }
 
     template<typename T>
