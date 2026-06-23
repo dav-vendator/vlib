@@ -86,7 +86,7 @@ VLib is a learning-oriented project aimed at bridging the gap between writing C+
 * [x] Smart Pointer
 * [x] Vector
 * [x] Matrix
-* [ ] Unique Pointer
+* [x] Unique Pointer
 * [ ] Tensor
 * [ ] Thread Pool
 * [ ] Neural Network
