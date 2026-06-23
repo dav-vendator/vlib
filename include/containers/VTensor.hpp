@@ -117,6 +117,10 @@ namespace Vlib{
     {}
 
     template<typename T>
+    VTensor<T>::VTensor(std::initializer_list<std::size_t> shape): VTensor(std::vector<std::size_t>(shape))
+    {}
+
+    template<typename T>
     VTensor<T>::VTensor(const std::vector<std::size_t>& shape): data_(nullptr),
                                                                 shape_(shape),
                                                                 size_(build_size(shape)){
