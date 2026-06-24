@@ -14,6 +14,14 @@ Author: Dav Vendator
 #include <utility>
 
 namespace Vlib{
+
+    //forward declaration
+    template<typename T>
+    class VTensor;
+
+    template<typename T>
+    class VTensorView;
+
     template<typename T>
     class VTensor {
             T* data_;
@@ -21,9 +29,10 @@ namespace Vlib{
             std::vector<std::size_t> strides_;
             std::size_t size_;
 
-            void build_strides();
+            static std::vector<std::size_t> build_strides(const std::vector<std::size_t>&);
 
-            std::size_t build_size(const std::vector<std::size_t>&) noexcept;
+            static sstd::size_t build_size(const std::vector<std::size_t>&) noexcept;
+
             std::size_t offset(const std::vector<std::size_t>&) const;
             std::size_t offset(const std::initializer_list<std::size_t>) const;
 
@@ -60,7 +69,7 @@ namespace Vlib{
     };
 
     template<typename T>
-    std::size_t VTensor<T>::build_size(const std::vector<std::size_t>& shape) noexcept {  
+    std::size_t build_size(const std::vector<std::size_t>& shape) noexcept {  
         std::size_t sz = 1;
         for (auto& val : shape)
             sz *= val;
@@ -68,13 +77,16 @@ namespace Vlib{
     }
 
     template<typename T>
-    void VTensor<T>::build_strides(){
-        this->strides_.resize(this->shape_.size());
-        std::size_t running = 1;
-        for (std::size_t i = this->shape_.size(); i-- > 0; ) {
-            this->strides_[i] = running;
-            running *= this->shape_[i];
-        }
+    std::vector<std::size_t>
+    build_strides(const std::vector<std::size_t>& shape)
+    {
+        std::vector<std::size_t> strides(shape.size()); 
+        std::size_t running = 1;    
+        for (std::size_t i = shape.size(); i-- > 0; ) {
+            strides[i] = running;
+            running *= shape[i];
+        }   
+        return strides;
     }
 
     template<typename T>
@@ -125,7 +137,7 @@ namespace Vlib{
                                                                 shape_(shape),
                                                                 size_(build_size(shape)){
        
-        build_strides();
+        this->strides_ = this->build_strides(this->shape_);
         if (size_ == 0)
             return;
         data_ = new T[size_]();
@@ -237,7 +249,7 @@ namespace Vlib{
         if (build_size(new_shape) != this->size_)
             throw std::invalid_argument("New shape is incompatible");
         this->shape_ = new_shape;
-        this->build_strides();
+        this->strides_ = this->build_strides(this->shape_);
     }
 
     template<typename T>
@@ -253,6 +265,63 @@ namespace Vlib{
         std::swap(this->data_, other.data_);
     }
 
+// VTensor View -- A view class which is returned when slice or row operations are called on VTensor
+    template<typename T>
+    class VTensorView {
+    private:
+        T* data_;
+        std::vector<std::size_t> shape_;
+        std::vector<std::size_t> strides_;
+        std::size_t offset_;
+
+        VTensorView(
+            T*,
+            std::vector<std::size_t>,
+            std::vector<std::size_t>,
+            std::size_t
+        );
+
+        std::size_t offset(std::initializer_list<std::size_t>) const;
+
+        friend class VTensor<T>;
+
+    public:
+        VTensorView() = delete;
+
+        T& operator()(std::initializer_list<std::size_t>);
+        const T& operator()(std::initializer_list<std::size_t>) const;
+
+        VTensor<T> copy() const;
+
+        VTensorView<T> slice(std::size_t dim, std::size_t index) const;
+    };
+
+    template<typename T>
+    VTensorView<T>::VTensorView(
+        T* data,
+        std::vector<std::size_t> shape,
+        std::vector<std::size_t> strides,
+        std::size_t offset
+    ): data_(data),
+       shape_(std::move(shape)),
+       strides_(std::move(strides)),
+       offset_(offset){
+        if (data_ == nullptr)
+            throw std::invalid_argument("Data cannot be a null pointer.");
+
+        if (shape_.size() != strides_.size())
+            throw std::invalid_argument("Shape and strides rank mismatch.");
+    }
+
+    template<typename T>
+    VTensor<T> VTensorView<T>::copy() const{
+        if (data_ == nullptr)
+            throw std::logic_error("TensorView has no valid data.");
+
+        T* temp_data;
+        VTensor<T> new_;
+
+    }
 
 }
 
