@@ -31,10 +31,12 @@ namespace Vlib{
 
             static std::vector<std::size_t> build_strides(const std::vector<std::size_t>&);
 
-            static sstd::size_t build_size(const std::vector<std::size_t>&) noexcept;
+            static std::size_t build_size(const std::vector<std::size_t>&) noexcept;
 
             std::size_t offset(const std::vector<std::size_t>&) const;
             std::size_t offset(const std::initializer_list<std::size_t>) const;
+
+            friend class VTensorView<T>;
 
         public:
             VTensor();
@@ -94,15 +96,15 @@ namespace Vlib{
         if (indices.size() != this->shape_.size())
             throw std::invalid_argument("Indices are not equal to shape.");
 
-        std::size_t offset = 0;
+        std::size_t off = 0;
 
         for (std::size_t i = 0; i < indices.size(); i++){
             if (indices[i] >= this->shape_[i])
                 throw std::out_of_range("Tensor index out of range");
-            offset += (indices[i] * this->strides_[i]);
+            off += (indices[i] * this->strides_[i]);
         }
 
-        return offset;   
+        return off;   
     }
 
     template<typename T>
@@ -270,18 +272,26 @@ namespace Vlib{
     class VTensorView {
     private:
         T* data_;
+        std::size_t size_;
+
         std::vector<std::size_t> shape_;
         std::vector<std::size_t> strides_;
+
         std::size_t offset_;
 
         VTensorView(
             T*,
             std::vector<std::size_t>,
             std::vector<std::size_t>,
+            std::size_t,
             std::size_t
         );
 
         std::size_t offset(std::initializer_list<std::size_t>) const;
+
+        std::size_t offset(std::vector<std::size_t>&) const;
+
+        bool next_index(std::vector<std::size_t>&, const std::vector<std::size_t>&) const;
 
         friend class VTensor<T>;
 
@@ -297,15 +307,29 @@ namespace Vlib{
     };
 
     template<typename T>
+    bool VTensorView<T>::next_index(std::vector<std::size_t>& index, 
+                 const std::vector<std::size_t>& shape) const {
+        for (std::size_t dim  = shape.size(); dim-- > 0;){
+            ++index[dim];
+            if (index[dim] < shape[dim])
+                return true;
+            index[dim] = 0;
+        }
+        return false;
+    }
+
+    template<typename T>
     VTensorView<T>::VTensorView(
         T* data,
         std::vector<std::size_t> shape,
         std::vector<std::size_t> strides,
+        std::size_t size,
         std::size_t offset
     ): data_(data),
        shape_(std::move(shape)),
        strides_(std::move(strides)),
-       offset_(offset){
+       offset_(offset),
+       size_(size){
         if (data_ == nullptr)
             throw std::invalid_argument("Data cannot be a null pointer.");
 
@@ -318,10 +342,23 @@ namespace Vlib{
         if (data_ == nullptr)
             throw std::logic_error("TensorView has no valid data.");
 
-        T* temp_data;
-        VTensor<T> new_;
+        VTensor<T> result(this->shape_);
 
+        if (result.size() == 0)
+            return result;
+
+        std::vector<std::size_t> indx(this->shape_.size(), 0);
+        std::size_t linear = 0;
+        while (true){
+            result.data()[linear] = (*this)(indx);
+            ++linear;
+            if (!next_index(indx, this->shape_))
+                break;
+        }
+        return result;
+        
     }
+    
 
 }
 
